@@ -119,6 +119,25 @@ namespace DemoApp
             if (resolvedInstances["DemoApp.TodayWriter, af"] is IDateWriter myWriter2)
                 myWriter2.WriteDate();
 
+
+            //using DI.Resolve extension method
+            json = @"
+[
+    {
+    'Name': 'DemoApp.ConsoleOutput, af',
+    'Parameters': []
+    }
+    ,
+    {
+    'Name': 'DemoApp.TodayWriter, af',
+    'Parameters': ['testing1', 'testing2']
+    }
+]
+";
+            resolvedInstances = json.Resolve();
+            if (resolvedInstances["DemoApp.TodayWriter, af"] is IDateWriter myWriter3)
+                myWriter3.WriteDate();
+
         }
     }
 
@@ -139,9 +158,9 @@ namespace DemoApp
             {
                 if (inst.Parameters.Count == 0)
                 {
+
                     var myType = Type.GetType(inst.Name);
                     var myInst = Activator.CreateInstance(myType);
-                    //myInst = Convert.ChangeType(myInst, myType);
                     nameInstance.Add(inst.Name, myInst);
                 }
             }
@@ -154,10 +173,13 @@ namespace DemoApp
                     var myType = Type.GetType(inst.Name);
 
                     var myParameters = new List<object>();
-                    foreach (string name in inst.Parameters) myParameters.Add(nameInstance[name]);
+                    foreach (string name in inst.Parameters)
+                    {
+                        if(nameInstance.ContainsKey(name))myParameters.Add(nameInstance[name]);
+                        else myParameters.Add(name);
+                    }
 
                     var myInst = Activator.CreateInstance(myType, myParameters.ToArray());
-                    //myInst = Convert.ChangeType(myInst, myType);
                     nameInstance.Add(inst.Name, myInst);
                 }
             }
@@ -193,15 +215,22 @@ namespace DemoApp
 
     public class TodayWriter : IDateWriter
     {
-        private IOutput _output;
+        private IOutput? _output;
+        string testString = "";
         public TodayWriter(IOutput output)
         {
             this._output = output;
         }
 
+        public TodayWriter(string test1, string test2)
+        {
+            testString = test1 + ", " + test2;
+        }
+
         public void WriteDate()
         {
-            this._output.Write(DateTime.Today.ToShortDateString());
+            if (_output == null) Console.WriteLine(testString);
+            else this._output.Write(DateTime.Today.ToShortDateString());
         }
     }
 }
