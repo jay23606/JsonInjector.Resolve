@@ -118,7 +118,7 @@ namespace DemoApp
     }
 ]
 ";
-            var resolvedInstances = json.Resolve();
+            var resolvedInstances = DI.Resolve(json);
             if (resolvedInstances["DemoApp.TodayWriter, af"] is IDateWriter myWriter2)
                 myWriter2.WriteDate();
 
@@ -137,7 +137,7 @@ namespace DemoApp
     }
 ]
 ";
-            resolvedInstances = json.Resolve();
+            resolvedInstances = DI.Resolve(json);
             if (resolvedInstances["DemoApp.TodayWriter, af"] is IDateWriter myWriter3)
                 myWriter3.WriteDate();
 
@@ -166,13 +166,39 @@ namespace DemoApp
     }
 ]
 ";
-            resolvedInstances = json.Resolve();
+            resolvedInstances = DI.Resolve(json);
             if (resolvedInstances["DemoApp.IDateWriter"] is IDateWriter myWriter4)
                 myWriter4.WriteDate();
 
             if (resolvedInstances["DemoApp.DummyClass"] is IDummyClass myDummy)
                 myDummy.WriteSomething();
 
+
+            json = @"
+[
+    {
+    'Implementation': 'DemoApp.DummyClass, af',
+    'Interface': 'DemoApp.DummyClass'
+    }
+    ,
+    {
+    'Implementation': 'DemoApp.ConsoleOutput, af',
+    'Interface': 'DemoApp.IOutput'
+    }
+    ,
+    {
+    'Implementation': 'DemoApp.TodayWriter, af',
+    'Interface': 'DemoApp.IDateWriter'
+    }
+]
+";
+            //cleaned up the code a bit in a separate file and to only use Implementation & Interface
+            resolvedInstances = JsonInjector.Resolve(json);
+            if (resolvedInstances["DemoApp.IDateWriter"] is IDateWriter myWriter5)
+                myWriter5.WriteDate();
+
+            if (resolvedInstances["DemoApp.DummyClass"] is IDummyClass myDummy2)
+                myDummy2.WriteSomething();
 
         }
     }
