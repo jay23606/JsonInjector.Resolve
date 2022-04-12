@@ -41,9 +41,14 @@ Using JsonInjector.Resolve, the parameters are matched and filled for you:
 
 Disclaimer: I am sure there might be edge cases that I don't handle and you should probably not use this in production code.
 
-This is a good video describing dependency injection:
+Good video describing dependency injection using Autofac:
 
 https://www.youtube.com/watch?v=mCUNrRtVVWY
+
+Inspiration for this project:
+
+https://www.youtube.com/watch?v=NSVZa4JuTl8
+
 
 
 
