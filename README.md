@@ -10,7 +10,7 @@ json = @"
 [
     {
     'Implementation': 'DemoApp.DummyClass, af',
-    'Interface': 'DemoApp.DummyClass'
+    'Interface': 'DemoApp.IDummyClass'
     }
     ,
     {
@@ -35,7 +35,7 @@ Normally, to instantiate these objects you would do this:
 Using JsonInjector.Resolve, the parameters are matched and filled for you:
 ```csharp
   var instances = JsonInjector.Resolve(json);
-  if (resolvedInstances["DemoApp.DummyClass"] is IDummyClass dc)
+  if (resolvedInstances["DemoApp.IDummyClass"] is IDummyClass dc)
     dc.WriteSomething();
 ```
 
