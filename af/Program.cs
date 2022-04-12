@@ -10,175 +10,175 @@ namespace DemoApp
     {
         static void Main(string[] args)
         {
-            //NORMAL WAY
-            IDateWriter tw = new TodayWriter(new ConsoleOutput());
-            tw.WriteDate();
+//            //NORMAL WAY
+//            IDateWriter tw = new TodayWriter(new ConsoleOutput());
+//            tw.WriteDate();
 
 
-            //USING AUTOFAC
-            var builder = new ContainerBuilder();
-            builder.RegisterType<ConsoleOutput>().AsImplementedInterfaces();//.As<IOutput>();
-            //builder.RegisterType<TodayWriter>().SingleInstance();
-            builder.RegisterType<TodayWriter>().AsImplementedInterfaces();//.As<IDateWriter>();
-            var container = builder.Build();
-            var writer = container.Resolve<IDateWriter>(); //with AsImplementedInterfaces
-            //var writer = container.Resolve<TodayWriter>(); //with SingleInstance
-            writer.WriteDate();
+//            //USING AUTOFAC
+//            var builder = new ContainerBuilder();
+//            builder.RegisterType<ConsoleOutput>().AsImplementedInterfaces();//.As<IOutput>();
+//            //builder.RegisterType<TodayWriter>().SingleInstance();
+//            builder.RegisterType<TodayWriter>().AsImplementedInterfaces();//.As<IDateWriter>();
+//            var container = builder.Build();
+//            var writer = container.Resolve<IDateWriter>(); //with AsImplementedInterfaces
+//            //var writer = container.Resolve<TodayWriter>(); //with SingleInstance
+//            writer.WriteDate();
 
 
-            //USING CreateInstance
-            var co = Activator.CreateInstance(typeof(ConsoleOutput)) as IOutput;
-            var instance = Activator.CreateInstance(typeof(TodayWriter), co) as IDateWriter;
-            instance?.WriteDate();
+//            //USING CreateInstance
+//            var co = Activator.CreateInstance(typeof(ConsoleOutput)) as IOutput;
+//            var instance = Activator.CreateInstance(typeof(TodayWriter), co) as IDateWriter;
+//            instance?.WriteDate();
 
-            //USING CreateInstance with parameters array
-            List<object> parameters = new List<object>();
-            co = Activator.CreateInstance(typeof(ConsoleOutput)) as IOutput;
-            parameters.Add(co);
-            instance = Activator.CreateInstance(typeof(TodayWriter), parameters.ToArray()) as IDateWriter;
-            instance?.WriteDate();
-
-
-            //USING CreateInstance and Type.GetType (so that parameters could be stored in xml,json for example)
-            Type? type = Type.GetType("DemoApp.ConsoleOutput, af");
-            co = Activator.CreateInstance(type) as IOutput;
-            type = Type.GetType("DemoApp.TodayWriter, af");
-            parameters = new List<object>();
-            parameters.Add(co);
-            //instance = Activator.CreateInstance(type, co) as IDateWriter;
-            instance = Activator.CreateInstance(type, parameters.ToArray()) as IDateWriter;
-            instance?.WriteDate();
+//            //USING CreateInstance with parameters array
+//            List<object> parameters = new List<object>();
+//            co = Activator.CreateInstance(typeof(ConsoleOutput)) as IOutput;
+//            parameters.Add(co);
+//            instance = Activator.CreateInstance(typeof(TodayWriter), parameters.ToArray()) as IDateWriter;
+//            instance?.WriteDate();
 
 
-            //we could look up the parameters from the fully qualified name here in a dictionary
+//            //USING CreateInstance and Type.GetType (so that parameters could be stored in xml,json for example)
+//            Type? type = Type.GetType("DemoApp.ConsoleOutput, af");
+//            co = Activator.CreateInstance(type) as IOutput;
+//            type = Type.GetType("DemoApp.TodayWriter, af");
+//            parameters = new List<object>();
+//            parameters.Add(co);
+//            //instance = Activator.CreateInstance(type, co) as IDateWriter;
+//            instance = Activator.CreateInstance(type, parameters.ToArray()) as IDateWriter;
+//            instance?.WriteDate();
+
+
+//            //we could look up the parameters from the fully qualified name here in a dictionary
+//            var json = @"
+//[
+//    {
+//    'Name': 'DemoApp.ConsoleOutput, af',
+//    'Parameters': []
+//    }
+//    ,
+//    {
+//    'Name': 'DemoApp.TodayWriter, af',
+//    'Parameters': ['DemoApp.ConsoleOutput, af']
+//    }
+//]
+//".Replace("'", "\""); //System.Text.Json.JsonSerializer.Deserialize doesn't like single quotes
+
+//            var instances = JsonSerializer.Deserialize<List<Instance>>(json);
+//            Dictionary<string, object> nameInstance = new Dictionary<string, object>();
+
+//            //We could instantiate objects without constructor parameters first
+//            foreach (var inst in instances)
+//            {
+//                if (inst.Name == null) continue;
+//                if (inst.Parameters?.Count == 0 && !nameInstance.ContainsKey(inst.Name))
+//                {
+//                    var myType = Type.GetType(inst.Name);
+//                    if (myType != null)
+//                    {
+//                        var myInst = Activator.CreateInstance(myType);
+//                        if(myInst != null) nameInstance.Add(inst.Name, myInst);
+//                    }
+//                }
+//            }
+
+//            //Now instantiate objects that do require parameters using dictionary
+//            foreach (var inst in instances)
+//            {
+//                if (inst.Parameters.Count > 0 && !nameInstance.ContainsKey(inst.Name))
+//                {
+//                    var myType = Type.GetType(inst.Name);
+
+//                    var myParameters = new List<object>();
+//                    foreach (string name in inst.Parameters) myParameters.Add(nameInstance[name]);
+
+//                    var myInst = Activator.CreateInstance(myType, myParameters.ToArray());
+//                    //myInst = Convert.ChangeType(myInst, myType);
+//                    nameInstance.Add(inst.Name, myInst);
+//                }
+//            }
+
+//            if (nameInstance["DemoApp.TodayWriter, af"] is IDateWriter myWriter)
+//                myWriter.WriteDate();
+
+
+
+//            //using DI.Resolve extension method
+//            json = @"
+//[
+//    {
+//    'Name': 'DemoApp.ConsoleOutput, af',
+//    'Parameters': []
+//    }
+//    ,
+//    {
+//    'Name': 'DemoApp.TodayWriter, af',
+//    'Parameters': ['DemoApp.ConsoleOutput, af']
+//    }
+//]
+//";
+//            var resolvedInstances = DI.Resolve(json);
+//            if (resolvedInstances["DemoApp.TodayWriter, af"] is IDateWriter myWriter2)
+//                myWriter2.WriteDate();
+
+
+//            //using DI.Resolve extension method and pass string parameters
+//            json = @"
+//[
+//    {
+//    'Name': 'DemoApp.ConsoleOutput, af',
+//    'Parameters': []
+//    }
+//    ,
+//    {
+//    'Name': 'DemoApp.TodayWriter, af',
+//    'Parameters': ['testing1', 'testing2']
+//    }
+//]
+//";
+//            resolvedInstances = DI.Resolve(json);
+//            if (resolvedInstances["DemoApp.TodayWriter, af"] is IDateWriter myWriter3)
+//                myWriter3.WriteDate();
+
+
+//            //Could we look up what parameters/types the object has at runtime
+//            //to be more in line with what other DI containers do?
+//            //So in this case we want to look up the instance based on the interface name
+//            //
+//            //Added a recursive call to Resolve so if TodayWriter, for example, is passed
+//            //into another object's ctor, it will get instantiated
+//            json = @"
+//[
+//    {
+//    'Name': 'DemoApp.DummyClass, af',
+//    'Interface': 'DemoApp.DummyClass'
+//    }
+//    ,
+//    {
+//    'Name': 'DemoApp.ConsoleOutput, af',
+//    'Interface': 'DemoApp.IOutput'
+//    }
+//    ,
+//    {
+//    'Name': 'DemoApp.TodayWriter, af',
+//    'Interface': 'DemoApp.IDateWriter'
+//    }
+//]
+//";
+//            resolvedInstances = DI.Resolve(json);
+//            if (resolvedInstances["DemoApp.IDateWriter"] is IDateWriter myWriter4)
+//                myWriter4.WriteDate();
+
+//            if (resolvedInstances["DemoApp.DummyClass"] is IDummyClass myDummy)
+//                myDummy.WriteSomething();
+
+
             var json = @"
 [
     {
-    'Name': 'DemoApp.ConsoleOutput, af',
-    'Parameters': []
-    }
-    ,
-    {
-    'Name': 'DemoApp.TodayWriter, af',
-    'Parameters': ['DemoApp.ConsoleOutput, af']
-    }
-]
-".Replace("'", "\""); //System.Text.Json.JsonSerializer.Deserialize doesn't like single quotes
-
-            var instances = JsonSerializer.Deserialize<List<Instance>>(json);
-            Dictionary<string, object> nameInstance = new Dictionary<string, object>();
-
-            //We could instantiate objects without constructor parameters first
-            foreach (var inst in instances)
-            {
-                if (inst.Name == null) continue;
-                if (inst.Parameters?.Count == 0 && !nameInstance.ContainsKey(inst.Name))
-                {
-                    var myType = Type.GetType(inst.Name);
-                    if (myType != null)
-                    {
-                        var myInst = Activator.CreateInstance(myType);
-                        if(myInst != null) nameInstance.Add(inst.Name, myInst);
-                    }
-                }
-            }
-
-            //Now instantiate objects that do require parameters using dictionary
-            foreach (var inst in instances)
-            {
-                if (inst.Parameters.Count > 0 && !nameInstance.ContainsKey(inst.Name))
-                {
-                    var myType = Type.GetType(inst.Name);
-
-                    var myParameters = new List<object>();
-                    foreach (string name in inst.Parameters) myParameters.Add(nameInstance[name]);
-
-                    var myInst = Activator.CreateInstance(myType, myParameters.ToArray());
-                    //myInst = Convert.ChangeType(myInst, myType);
-                    nameInstance.Add(inst.Name, myInst);
-                }
-            }
-
-            if (nameInstance["DemoApp.TodayWriter, af"] is IDateWriter myWriter)
-                myWriter.WriteDate();
-
-
-
-            //using DI.Resolve extension method
-            json = @"
-[
-    {
-    'Name': 'DemoApp.ConsoleOutput, af',
-    'Parameters': []
-    }
-    ,
-    {
-    'Name': 'DemoApp.TodayWriter, af',
-    'Parameters': ['DemoApp.ConsoleOutput, af']
-    }
-]
-";
-            var resolvedInstances = DI.Resolve(json);
-            if (resolvedInstances["DemoApp.TodayWriter, af"] is IDateWriter myWriter2)
-                myWriter2.WriteDate();
-
-
-            //using DI.Resolve extension method and pass string parameters
-            json = @"
-[
-    {
-    'Name': 'DemoApp.ConsoleOutput, af',
-    'Parameters': []
-    }
-    ,
-    {
-    'Name': 'DemoApp.TodayWriter, af',
-    'Parameters': ['testing1', 'testing2']
-    }
-]
-";
-            resolvedInstances = DI.Resolve(json);
-            if (resolvedInstances["DemoApp.TodayWriter, af"] is IDateWriter myWriter3)
-                myWriter3.WriteDate();
-
-
-            //Could we look up what parameters/types the object has at runtime
-            //to be more in line with what other DI containers do?
-            //So in this case we want to look up the instance based on the interface name
-            //
-            //Added a recursive call to Resolve so if TodayWriter, for example, is passed
-            //into another object's ctor, it will get instantiated
-            json = @"
-[
-    {
-    'Name': 'DemoApp.DummyClass, af',
-    'Interface': 'DemoApp.DummyClass'
-    }
-    ,
-    {
-    'Name': 'DemoApp.ConsoleOutput, af',
-    'Interface': 'DemoApp.IOutput'
-    }
-    ,
-    {
-    'Name': 'DemoApp.TodayWriter, af',
-    'Interface': 'DemoApp.IDateWriter'
-    }
-]
-";
-            resolvedInstances = DI.Resolve(json);
-            if (resolvedInstances["DemoApp.IDateWriter"] is IDateWriter myWriter4)
-                myWriter4.WriteDate();
-
-            if (resolvedInstances["DemoApp.DummyClass"] is IDummyClass myDummy)
-                myDummy.WriteSomething();
-
-
-            json = @"
-[
-    {
     'Implementation': 'DemoApp.DummyClass, af',
-    'Interface': 'DemoApp.DummyClass'
+    'Interface': 'DemoApp.IDummyClass'
     }
     ,
     {
@@ -193,11 +193,11 @@ namespace DemoApp
 ]
 ";
             //cleaned up the code a bit in a separate file and to only use Implementation & Interface
-            resolvedInstances = JsonInjector.Resolve(json);
+            var resolvedInstances = JsonInjector.Resolve(json);
             if (resolvedInstances["DemoApp.IDateWriter"] is IDateWriter myWriter5)
                 myWriter5.WriteDate();
 
-            if (resolvedInstances["DemoApp.DummyClass"] is IDummyClass myDummy2)
+            if (resolvedInstances["DemoApp.IDummyClass"] is IDummyClass myDummy2)
                 myDummy2.WriteSomething();
 
         }
