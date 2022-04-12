@@ -2,7 +2,7 @@
 
 Barebones dependency injection from a json source.
 
-Uses Activator.CreateInstance to instantiate objects rescursively.
+Uses Activator.CreateInstance to instantiate objects recursively.
 
 Registration looks like this:
 ```csharp
