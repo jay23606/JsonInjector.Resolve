@@ -142,8 +142,16 @@ namespace DemoApp
             //Could we look up what parameters/types the object has at runtime
             //to be more in line with what other DI containers do?
             //So in this case we want to look up the instance based on the interface name
+            //
+            //Added a recursive call to Resolve so if TodayWriter, for example, is passed
+            //into another object's ctor--I have
             json = @"
 [
+    {
+    'Name': 'DemoApp.DummyClass, af',
+    'Interface': 'DemoApp.DummyClass'
+    }
+    ,
     {
     'Name': 'DemoApp.ConsoleOutput, af',
     'Interface': 'DemoApp.IOutput'
@@ -159,10 +167,9 @@ namespace DemoApp
             if (resolvedInstances["DemoApp.IDateWriter"] is IDateWriter myWriter4)
                 myWriter4.WriteDate();
 
-            //I think a real solution would try to resolve with multiple passes in case
-            //the TodayWriter, for example, is passed into another object's ctor--I have
-            //added a recursive call to Resolve to achieve this but it's untested
-            
+            if (resolvedInstances["DemoApp.DummyClass"] is IDummyClass myDummy)
+                myDummy.WriteSomething();
+
 
         }
     }
@@ -172,12 +179,13 @@ namespace DemoApp
     //can we create a helper class to do this for us?
     public static class DI
     {
-        public static Dictionary<string, object> Resolve(this string json)
+        public static Dictionary<string, object> Resolve(this string json, Dictionary<string, object> nameInstance = null)
         {
             json = json.Replace("'", "\"");
 
             var instances = JsonSerializer.Deserialize<List<Instance>>(json);
-            Dictionary<string, object> nameInstance = new Dictionary<string, object>();
+            //Dictionary<string, object>
+            if (nameInstance == null) nameInstance = new Dictionary<string, object>();
 
             if(instances==null) return nameInstance;
             //We could instantiate objects without constructor parameters first
@@ -270,7 +278,7 @@ namespace DemoApp
             while (instances.Count > nameInstance.Count && nameInstance.Count != oldNameInstanceCount)
             {
                 oldNameInstanceCount = nameInstance.Count;
-                nameInstance = json.Resolve();
+                nameInstance = json.Resolve(nameInstance);
             }
 
             return nameInstance;
@@ -323,5 +331,25 @@ namespace DemoApp
             if (_output == null) Console.WriteLine(testString);
             else this._output.Write(DateTime.Today.ToShortDateString());
         }
+    }
+
+    public class DummyClass: IDummyClass
+    {
+        IDateWriter _dw;
+        public DummyClass(IDateWriter dw)
+        {
+            _dw = dw;
+        }
+
+        public void WriteSomething()
+        {
+            Console.WriteLine("Something");
+            _dw.WriteDate();
+        }
+    }
+
+    public interface IDummyClass
+    {
+        void WriteSomething();
     }
 }
