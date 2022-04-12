@@ -1,6 +1,8 @@
 # JsonInjector.Resolve
 
-Uses Activator.CreateInstance to instantiate objects recursively.
+Barebones dependency injection from a json source.
+
+Uses Activator.CreateInstance to instantiate objects using recursion.
 
 Registration looks like this:
 ```json
@@ -35,7 +37,9 @@ Using JsonInjector.Resolve, the parameters are filled for you:
     dc.WriteSomething();
 ```
 
-This is a good video describing dependency ibjection if it is a new concept:
+Disclaimer: I am sure there might be edge cases that I don't handle and you should probably not use this in production code.
+
+This is a good video describing dependency injection:
 
 https://www.youtube.com/watch?v=mCUNrRtVVWY
 
