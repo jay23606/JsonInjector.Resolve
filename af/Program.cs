@@ -71,7 +71,7 @@ namespace DemoApp
             //We could instantiate objects without constructor parameters first
             foreach (var inst in instances)
             {
-                if (inst.Parameters.Count == 0)
+                if (inst.Parameters.Count == 0 && !nameInstance.ContainsKey(inst.Name))
                 {
                     var myType = Type.GetType(inst.Name);
                     var myInst = Activator.CreateInstance(myType);
@@ -83,7 +83,7 @@ namespace DemoApp
             //Now instantiate objects that do require parameters using dictionary
             foreach (var inst in instances)
             {
-                if (inst.Parameters.Count > 0)
+                if (inst.Parameters.Count > 0 && !nameInstance.ContainsKey(inst.Name))
                 {
                     var myType = Type.GetType(inst.Name);
 
@@ -120,7 +120,7 @@ namespace DemoApp
                 myWriter2.WriteDate();
 
 
-            //using DI.Resolve extension method
+            //using DI.Resolve extension method and pass string parameters
             json = @"
 [
     {
@@ -138,6 +138,32 @@ namespace DemoApp
             if (resolvedInstances["DemoApp.TodayWriter, af"] is IDateWriter myWriter3)
                 myWriter3.WriteDate();
 
+
+            //Could we look up what parameters/types the object has at runtime
+            //to be more in line with what other DI containers do?
+            //So in this case we want to look up the instance based on the interface name
+            json = @"
+[
+    {
+    'Name': 'DemoApp.ConsoleOutput, af',
+    'Interface': 'DemoApp.IOutput'
+    }
+    ,
+    {
+    'Name': 'DemoApp.TodayWriter, af',
+    'Interface': 'DemoApp.IDateWriter'
+    }
+]
+";
+            resolvedInstances = json.Resolve();
+            if (resolvedInstances["DemoApp.IDateWriter"] is IDateWriter myWriter4)
+                myWriter4.WriteDate();
+
+            //I think a real solution would try to resolve with multiple passes in case
+            //the TodayWriter, for example, is passed into another object's ctor--I have
+            //added a recursive call to Resolve to achieve this but it's untested
+            
+
         }
     }
 
@@ -153,36 +179,100 @@ namespace DemoApp
             var instances = JsonSerializer.Deserialize<List<Instance>>(json);
             Dictionary<string, object> nameInstance = new Dictionary<string, object>();
 
+            if(instances==null) return nameInstance;
             //We could instantiate objects without constructor parameters first
             foreach (var inst in instances)
             {
-                if (inst.Parameters.Count == 0)
+                if(inst.Parameters == null && inst.Interface != null)
+                {
+                    //lets check what actually happens in these scenarios
+                    var myType = Type.GetType(inst.Name);
+                    var ctors = myType?.GetConstructors();
+                    if (ctors != null && ctors.Length > 0)
+                    {
+                        foreach (var ctor in ctors)
+                        {
+                            if (ctor.GetParameters().Length == 0 && !nameInstance.ContainsKey(inst.Interface))
+                            {
+                                var myInst = Activator.CreateInstance(myType);
+                                nameInstance.Add(inst.Interface, myInst);
+                            }
+                        }
+                    }
+                    //I am not sure this will ever happen so will remove for now
+                    //else
+                    //{
+                    //    var myInst = Activator.CreateInstance(myType);
+                    //    nameInstance.Add(inst.Interface, myInst);
+                    //}
+                }
+                else if (inst?.Parameters?.Count == 0)
                 {
 
                     var myType = Type.GetType(inst.Name);
-                    var myInst = Activator.CreateInstance(myType);
-                    nameInstance.Add(inst.Name, myInst);
+                    if (myType != null && !nameInstance.ContainsKey(inst.Name))
+                    {
+                        var myInst = Activator.CreateInstance(myType);
+                        if (myInst != null) nameInstance.Add(inst.Name, myInst);
+                    }
                 }
             }
 
-            //Now instantiate objects that do require parameters using dictionary
+            //Now instantiate objects with Parameters in json or in call to GetConstructors.GetParameters
             foreach (var inst in instances)
             {
-                if (inst.Parameters.Count > 0)
+                if (inst.Parameters == null && inst.Interface != null)
+                {
+                    var myType = Type.GetType(inst.Name);
+                    var ctors = myType?.GetConstructors();
+                    if (ctors != null && ctors.Length > 0)
+                    {
+                        foreach (var ctor in ctors)
+                        {
+                            bool hasAllTypes = true;
+                            var myParameters = new List<object>();
+                            foreach (var param in ctor.GetParameters())
+                            {
+                                //we need to check if our dictionary has all types
+                                if (!nameInstance.ContainsKey(param.ParameterType.ToString())) hasAllTypes = false;
+                                else myParameters.Add(nameInstance[param.ParameterType.ToString()]);
+                            }
+                            if (hasAllTypes && myParameters.Count > 0 && myType != null && !nameInstance.ContainsKey(inst.Interface))
+                            {
+                                var myInst = Activator.CreateInstance(myType, myParameters.ToArray());
+                                if (myInst != null) nameInstance.Add(inst.Interface, myInst); //should also use interface I suppose
+                                break; //we found one so don't try and create another one with same interface key
+                            }
+                        }
+                    }
+                }
+                else if (inst?.Parameters?.Count > 0)
                 {
                     var myType = Type.GetType(inst.Name);
 
                     var myParameters = new List<object>();
                     foreach (string name in inst.Parameters)
                     {
-                        if(nameInstance.ContainsKey(name))myParameters.Add(nameInstance[name]);
+                        if (nameInstance.ContainsKey(name)) myParameters.Add(nameInstance[name]);
                         else myParameters.Add(name);
                     }
 
-                    var myInst = Activator.CreateInstance(myType, myParameters.ToArray());
-                    nameInstance.Add(inst.Name, myInst);
+                    if (myType != null && !nameInstance.ContainsKey(inst.Name))
+                    {
+                        var myInst = Activator.CreateInstance(myType, myParameters.ToArray());
+                        if (myInst != null ) nameInstance.Add(inst.Name, myInst);
+                    }
                 }
             }
+
+            //While instances.Count > nameInstance.Count and nameInstance.Count != oldNameInstanceCount we'll keep calling resolve recursively on json
+            int oldNameInstanceCount = -1;
+            while (instances.Count > nameInstance.Count && nameInstance.Count != oldNameInstanceCount)
+            {
+                oldNameInstanceCount = nameInstance.Count;
+                nameInstance = json.Resolve();
+            }
+
             return nameInstance;
         }
     }
@@ -192,6 +282,7 @@ namespace DemoApp
     public class Instance
     {
         public string Name { get; set; }
+        public string Interface { get; set; }
         public List<string> Parameters { get; set; }
     }
 
