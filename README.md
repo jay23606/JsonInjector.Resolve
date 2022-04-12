@@ -32,7 +32,7 @@ Normally, to instantiate these objects you would do this:
   dc.WriteSomething();
 ```
 
-Using JsonInjector.Resolve, the parameters are filled for you:
+Using JsonInjector.Resolve, the parameters are matched and filled for you:
 ```csharp
   var instances = JsonInjector.Resolve(json);
   if (resolvedInstances["DemoApp.DummyClass"] is IDummyClass dc)
