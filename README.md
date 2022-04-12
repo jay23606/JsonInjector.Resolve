@@ -5,7 +5,8 @@ Barebones dependency injection from a json source.
 Uses Activator.CreateInstance to instantiate objects rescursively.
 
 Registration looks like this:
-```json
+```csharp
+json = @"
 [
     {
     'Implementation': 'DemoApp.DummyClass, af',
@@ -22,6 +23,7 @@ Registration looks like this:
     'Interface': 'DemoApp.IDateWriter'
     }
 ]
+";
 ```
 
 Normally, to instantiate these objects you would do this:
