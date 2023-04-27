@@ -34,7 +34,7 @@ Normally, to instantiate these objects you would do this:
 
 Using JsonInjector.Resolve, constructor parameters are matched and filled for you:
 ```csharp
-  var instances = JsonInjector.Resolve(json);
+  var resolvedInstances = JsonInjector.Resolve(json);
   if (resolvedInstances["DemoApp.IDummyClass"] is IDummyClass dc)
     dc.WriteSomething();
 ```
